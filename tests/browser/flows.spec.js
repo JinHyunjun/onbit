@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
 test('wardrobe recommendation history reload and delete', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
@@ -83,4 +84,28 @@ test('missing and busy camera have separate recovery instructions', async ({ pag
   await expect(page.locator('#quality')).toContainText('찾지 못했습니다');
   await page.locator('#camera').click();
   await expect(page.locator('#quality')).toContainText('다른 앱');
+});
+test('photo produces personal colour candidates and applies them to outfit recommendations', async ({ page }) => {
+  const requests = [];
+  page.on('request', request => requests.push({method:request.method(),url:request.url()}));
+  await page.goto('/');
+  await page.locator('#upload').setInputFiles(fileURLToPath(new URL('../fixtures/astronaut.png', import.meta.url)));
+  await expect(page.locator('.personal-candidate')).toHaveCount(2, {timeout:45000});
+  await expect(page.locator('#personal-result')).toContainText('사진에서 읽은 특징');
+  await page.locator('.personal-candidate button').first().click();
+  await expect(page.locator('#palette-source')).toContainText('사진 분석');
+  await page.getByRole('button', {name:'코디 3개 추천받기 →'}).click();
+  await expect(page.locator('.look').first()).toContainText('사진 분석에서 추천받아 적용한');
+  await page.locator('#contrast').selectOption('high');
+  await expect(page.locator('#personal-result')).toContainText('뚜렷한 대비');
+  expect(requests.every(request=>request.method==='GET')).toBeTruthy();
+  expect(requests.every(request=>new URL(request.url).origin===new URL(process.env.ONBIT_BASE_URL??'http://localhost:8787').origin)).toBeTruthy();
+  await page.screenshot({path:'test-results/personal-color.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBeTruthy();
+  await page.screenshot({path:'test-results/personal-color-mobile.png',fullPage:true});
+  await page.locator('#discard').click();
+  await expect(page.locator('.personal-candidate')).toHaveCount(0);
+  await page.locator('#contrast').selectOption('low');
+  await expect(page.locator('.personal-candidate')).toHaveCount(0);
 });

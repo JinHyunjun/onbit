@@ -18,7 +18,7 @@ export function photoQuality(pixels) {
   if (mean > 225 || clipped / count > .55) return { ok: false, reason: '밝거나 어두운 영역이 너무 많습니다. 강한 역광을 피해 다시 촬영해 주세요.' };
   return { ok: true, reason: '밝기 확인을 통과했습니다. 색조명·화장·카메라 보정은 결과에 영향을 줄 수 있습니다.' };
 }
-export function recommendations({ temperature, rain, purpose, palette, wardrobe = [] }) {
+export function recommendations({ temperature, rain, purpose, palette, paletteOrigin = 'manual', wardrobe = [] }) {
   if (!Number.isFinite(temperature) || temperature < -40 || temperature > 50) throw new Error('기온을 -40~50℃ 사이로 입력해 주세요.');
   if (!Object.hasOwn(palettes, palette)) throw new Error('팔레트를 선택해 주세요.');
   const p = palettes[palette];
@@ -32,7 +32,7 @@ export function recommendations({ temperature, rain, purpose, palette, wardrobe 
     const ownedTop = choose('top'), ownedBottom = choose('bottom'), ownedLayer = choose('outer');
     return { title, color, colorName: p.labels[index], top: ownedTop?.name ?? `${p.labels[index]} ${top}`, bottom: ownedBottom?.name ?? bottom, layer: ownedLayer?.name ?? layer,
       owned: [ownedTop, ownedBottom, ownedLayer].filter(Boolean).map(item => item.name),
-      reason: `${temperature}℃에 맞춰 ${top}와 ${layer} 조합을 제안합니다. ${purpose === 'work' ? '출근·약속에 맞게 단정한 실루엣' : purpose === 'walk' ? '걷기 편한 움직임' : '편안한 일상'}을 고려했고, 직접 고른 ${p.season}를 반영했습니다.`,
+      reason: `${temperature}℃에 맞춰 ${top}와 ${layer} 조합을 제안합니다. ${purpose === 'work' ? '출근·약속에 맞게 단정한 실루엣' : purpose === 'walk' ? '걷기 편한 움직임' : '편안한 일상'}을 고려했고, ${paletteOrigin === 'photo' ? '사진 분석에서 추천받아 적용한' : '직접 고른'} ${p.season}를 반영했습니다.`,
       extra: rain ? '강수가 있는 조건입니다. 우산과 물에 강한 신발을 함께 챙겨 주세요.' : '실내외 온도 차이에 맞춰 겉옷을 조절해 주세요.' };
   });
 }
