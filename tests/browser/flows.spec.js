@@ -52,7 +52,8 @@ test('synthetic webcam capture loads self-hosted model and stops tracks', async 
     } });
   });
   const outbound = []; const errors = [];
-  page.on('request', request => { if (!request.url().startsWith('http://localhost:8787')) outbound.push(request.url()); });
+  const origin = new URL(process.env.ONBIT_BASE_URL ?? 'http://localhost:8787').origin;
+  page.on('request', request => { if (new URL(request.url()).origin !== origin) outbound.push(request.url()); });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/'); await page.locator('#camera').click();
   await expect(page.locator('#capture')).toBeVisible();

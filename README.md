@@ -2,6 +2,10 @@
 
 졸업 프로젝트의 컬러·날씨 추천을 기기 내 사진 비교와 일상 코디 추천으로 재구성한 초기 웹 프로토타입입니다. 서비스명은 임시 이름입니다.
 
+**공개 서비스: https://onbit.life-quiz.workers.dev**
+
+카메라는 공개 주소를 일반 Chrome·Edge·Safari에서 직접 열어 사용하세요. 채팅 앱의 내장 미리보기에서는 카메라가 제한될 수 있습니다.
+
 ## 실행
 
 ```powershell
@@ -19,6 +23,8 @@ npm test
 npm run test:e2e
 npm run preview:deploy
 ```
+
+배포된 서비스 검증: PowerShell에서 `$env:ONBIT_BASE_URL='https://onbit.life-quiz.workers.dev'` 설정 후 `npm run test:e2e`. 테스트는 합성 카메라를 사용하며 실제 웹캠이나 얼굴 사진을 수집하지 않습니다.
 
 ## 현재 구현
 
