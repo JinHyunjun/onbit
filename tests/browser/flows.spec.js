@@ -1,8 +1,34 @@
 import { test, expect } from '@playwright/test';
+
+test('automatic regional weather, varied outfits and explicit API failure', async ({ page }) => {
+  await page.route('**/api/weather?city=*', route => {
+    const city = new URL(route.request().url()).searchParams.get('city');
+    return route.fulfill({ json: { temperature: city === 'seoul' ? 3 : 30, rain: city === 'seoul', observedAt: '2026-10-09T09:15' } });
+  });
+  await page.goto('/');
+  await expect(page.locator('#weather-note')).toContainText('현재 날씨 반영');
+  await expect(page.locator('#temperature')).toHaveValue('3');
+  await page.locator('#recommend-form').evaluate(form => form.requestSubmit());
+  await expect(page.locator('.look')).toHaveCount(3);
+  const first = await page.locator('.clothes').allTextContents();
+  expect(new Set(first).size).toBe(3);
+  await expect(page.locator('.with-layer')).toHaveCount(3);
+  await page.locator('#recommend-form').evaluate(form => form.requestSubmit());
+  expect(await page.locator('.clothes').allTextContents()).not.toEqual(first);
+  await page.locator('#city').selectOption('busan');
+  await expect(page.locator('#temperature')).toHaveValue('30');
+  await expect(page.locator('.look')).toHaveCount(0);
+  await page.route('**/api/weather?city=*', route => route.fulfill({ status: 502, json: { error: 'upstream unavailable' } }));
+  await page.locator('#weather').click();
+  await expect(page.locator('#weather-note')).toContainText('날씨 불러오기 실패');
+  await expect(page.locator('#weather-note')).toContainText('직접');
+});
 import { fileURLToPath } from 'node:url';
 test('wardrobe recommendation history reload and delete', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.route('**/api/weather?city=seoul', route => route.fulfill({ json: { temperature: 18, rain: false, observedAt: '2026-10-09T09:15' } }));
   await page.goto('/');
+  await expect(page.locator('#weather-note')).toContainText('현재 날씨 반영');
   await page.getByRole('button', { name: /선명하고 시원한 색/ }).click();
   await page.locator('#item-name').fill('<b>네이비 셔츠</b>');
   await page.getByRole('button', { name: '옷 등록 +' }).click();

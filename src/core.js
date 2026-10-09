@@ -18,7 +18,7 @@ export function photoQuality(pixels) {
   if (mean > 225 || clipped / count > .55) return { ok: false, reason: '밝거나 어두운 영역이 너무 많습니다. 강한 역광을 피해 다시 촬영해 주세요.' };
   return { ok: true, reason: '밝기 확인을 통과했습니다. 색조명·화장·카메라 보정은 결과에 영향을 줄 수 있습니다.' };
 }
-export function recommendations({ temperature, rain, purpose, palette, paletteOrigin = 'manual', wardrobe = [] }) {
+export function recommendations({ temperature, rain, purpose, palette, paletteOrigin = 'manual', wardrobe = [], variation = 0 }) {
   if (!Number.isFinite(temperature) || temperature < -40 || temperature > 50) throw new Error('기온을 -40~50℃ 사이로 입력해 주세요.');
   if (!Object.hasOwn(palettes, palette)) throw new Error('팔레트를 선택해 주세요.');
   const p = palettes[palette];
@@ -27,12 +27,16 @@ export function recommendations({ temperature, rain, purpose, palette, paletteOr
   const bottom = purpose === 'work' ? '슬랙스' : purpose === 'walk' ? '편안한 바지' : '데님 또는 면바지';
   const titles = ['편안한 기본 조합', '색으로 주는 작은 포인트', '차분하게 정돈한 조합'];
   return titles.map((title, index) => {
-    const color = p.colors[index];
+    const slot = (index + variation) % 4;
+    const color = p.colors[slot];
+    const variedTop = [top, temperature < 10 ? '터틀넥 니트' : temperature < 20 ? '얇은 니트' : temperature < 28 ? '얇은 셔츠' : '린넨 반팔 셔츠', temperature < 10 ? '기모 맨투맨' : temperature < 20 ? '긴팔 티셔츠' : '반팔 티셔츠', top][slot];
+    const variedBottom = [bottom, purpose === 'work' ? '테이퍼드 팬츠' : '면바지', purpose === 'walk' ? '조거 팬츠' : '와이드 팬츠', bottom][slot];
+    const variedLayer = temperature < 5 ? ['두꺼운 패딩', '두꺼운 울 코트', '두꺼운 다운 재킷', '두꺼운 롱 패딩'][slot] : temperature < 12 ? ['코트', '재킷', '트렌치 코트', '점퍼'][slot] : temperature < 20 ? ['가벼운 가디건', '얇은 재킷', '가벼운 바람막이', '얇은 셔츠 겉옷'][slot] : ['겉옷 없이', '냉방용 얇은 가디건', '겉옷 없이', '필요하면 얇은 셔츠 겉옷'][slot];
     const choose = category => wardrobe.filter(item => item.category === category && (item.warmth === 'all' || (temperature < 15 ? item.warmth === 'warm' : item.warmth === 'light'))).sort((a, b) => Number(b.color === color) - Number(a.color === color))[index % Math.max(1, wardrobe.filter(item => item.category === category && (item.warmth === 'all' || (temperature < 15 ? item.warmth === 'warm' : item.warmth === 'light'))).length)];
     const ownedTop = choose('top'), ownedBottom = choose('bottom'), ownedLayer = choose('outer');
-    return { title, color, colorName: p.labels[index], top: ownedTop?.name ?? `${p.labels[index]} ${top}`, bottom: ownedBottom?.name ?? bottom, layer: ownedLayer?.name ?? layer,
+    return { title, color, bottomColor: ['#59616a', '#d1c5ae', '#494b44', '#8e969c'][slot], longSleeve: temperature < 20, hasLayer: temperature < 20 || slot % 2 === 1, wideLeg: slot === 2, colorName: p.labels[slot], top: ownedTop?.name ?? `${p.labels[slot]} ${variedTop}`, bottom: ownedBottom?.name ?? variedBottom, layer: ownedLayer?.name ?? variedLayer,
       owned: [ownedTop, ownedBottom, ownedLayer].filter(Boolean).map(item => item.name),
-      reason: `${temperature}℃에 맞춰 ${top}와 ${layer} 조합을 제안합니다. ${purpose === 'work' ? '출근·약속에 맞게 단정한 실루엣' : purpose === 'walk' ? '걷기 편한 움직임' : '편안한 일상'}을 고려했고, ${paletteOrigin === 'photo' ? '사진 분석에서 추천받아 적용한' : '직접 고른'} ${p.season}를 반영했습니다.`,
+      reason: `${temperature}℃에 맞춰 ${variedTop} · ${variedLayer} 조합을 제안합니다. ${purpose === 'work' ? '출근·약속에 맞게 단정한 실루엣' : purpose === 'walk' ? '걷기 편한 움직임' : '편안한 일상'}을 고려했고, ${paletteOrigin === 'photo' ? '사진 분석에서 추천받아 적용한' : '직접 고른'} ${p.season}를 반영했습니다.`,
       extra: rain ? '강수가 있는 조건입니다. 우산과 물에 강한 신발을 함께 챙겨 주세요.' : '실내외 온도 차이에 맞춰 겉옷을 조절해 주세요.' };
   });
 }

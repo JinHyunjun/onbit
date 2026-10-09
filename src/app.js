@@ -158,22 +158,27 @@ $('discard').addEventListener('click', () => { stopCamera(); photoVersion++; ima
 window.addEventListener('pagehide', stopCamera);
 document.addEventListener('visibilitychange', () => { if (document.hidden) stopCamera(); });
 
-let weatherSource = '직접 입력';
-$('weather').addEventListener('click', async () => {
+let weatherSource = '직접 입력', weatherVersion = 0, variation = 0;
+async function loadWeather() {
+  const version = ++weatherVersion;
   const button = $('weather'); button.disabled = true; $('weather-note').textContent = '지역 날씨를 불러오고 있어요…'; const city = $('city').value;
-  try { const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`); const data = await response.json(); if (!response.ok) throw new Error(data.error); if (city !== $('city').value) return; $('temperature').value = data.temperature; $('rain').value = String(data.rain); weatherSource = `Open-Meteo · ${data.observedAt}`; $('weather-note').textContent = `${weatherSource} (한국 시간) · 지역 선택값 기준`; }
-  catch (error) { weatherSource = '직접 입력'; $('weather-note').textContent = error.message || '날씨를 불러오지 못했습니다. 직접 입력해 주세요.'; }
-  finally { button.disabled = false; }
-});
-for (const id of ['temperature', 'rain', 'city']) $(id).addEventListener('change', () => { weatherSource = '직접 입력'; $('weather-note').textContent = '조건이 변경되었습니다. 직접 입력한 값으로 추천합니다.'; $('results').replaceChildren(); });
+  $('results').replaceChildren();
+  try { const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`, { signal: AbortSignal.timeout(10000) }); const data = await response.json(); if (!response.ok) throw new Error(data.error); if (!Number.isFinite(data.temperature) || typeof data.rain !== 'boolean') throw new Error('날씨 응답 오류'); if (version !== weatherVersion) return; $('temperature').value = data.temperature; $('rain').value = String(data.rain); weatherSource = `Open-Meteo · ${data.observedAt}`; $('weather-note').textContent = `${weatherSource} (한국 시간) · 지역 현재 날씨 반영`; }
+  catch (error) { if (version !== weatherVersion) return; weatherSource = '직접 입력'; $('weather-note').textContent = `날씨 불러오기 실패: ${error.message || '연결 오류'}. 기온과 강수를 직접 확인해 입력해 주세요.`; }
+  finally { if (version === weatherVersion) button.disabled = false; }
+}
+$('weather').addEventListener('click', loadWeather);
+$('city').addEventListener('change', loadWeather);
+for (const id of ['temperature', 'rain']) $(id).addEventListener('change', () => { weatherVersion++; $('weather').disabled = false; weatherSource = '직접 입력'; $('weather-note').textContent = '직접 입력한 날씨로 추천합니다. 지역 날씨 불러오기를 누르면 실제 날씨로 돌아갑니다.'; $('results').replaceChildren(); });
+loadWeather();
 $('purpose').addEventListener('change', () => $('results').replaceChildren());
 $('recommend-form').addEventListener('submit', event => {
-  event.preventDefault(); const temperature = Number($('temperature').value), purpose = $('purpose').value, rain = $('rain').value === 'true';
+  event.preventDefault(); if ($('weather').disabled) { notify('날씨를 불러오는 중입니다. 잠시 후 추천해 주세요.'); return; } const temperature = Number($('temperature').value), purpose = $('purpose').value, rain = $('rain').value === 'true';
   try {
-    const looks = recommendations({ temperature, purpose, rain, palette: state.palette, paletteOrigin: state.paletteOrigin, wardrobe: state.wardrobe }); $('results').replaceChildren();
+    const looks = recommendations({ temperature, purpose, rain, palette: state.palette, paletteOrigin: state.paletteOrigin, wardrobe: state.wardrobe, variation: variation++ }); $('results').replaceChildren();
     looks.forEach((look, index) => {
       const card = document.createElement('article'); card.className = 'look card';
-      const visual = document.createElement('div'); visual.className = 'look-visual'; visual.style.setProperty('--look-color', look.color); visual.innerHTML = `<span class="look-number">LOOK 0${index + 1}</span><div class="shirt"></div><div class="pants"></div><span class="look-swatch"></span>`;
+      const visual = document.createElement('div'); visual.className = 'look-visual'; visual.style.setProperty('--look-color', look.color); visual.style.setProperty('--bottom-color', look.bottomColor); visual.classList.toggle('long-sleeve', look.longSleeve); visual.classList.toggle('with-layer', look.hasLayer); visual.classList.toggle('wide-leg', look.wideLeg); visual.innerHTML = `<span class="look-number">LOOK 0${index + 1}</span><div class="shirt"></div><div class="pants"></div><div class="outer"></div><span class="look-swatch"></span>`;
       const title = document.createElement('h3'); title.textContent = look.title;
       const clothes = document.createElement('p'); clothes.className = 'clothes'; clothes.textContent = `${look.top} · ${look.bottom} · ${look.layer}`;
       const reason = document.createElement('p'); reason.className = 'muted'; reason.textContent = look.reason;
