@@ -24,6 +24,24 @@ test('automatic regional weather, varied outfits and explicit API failure', asyn
   await expect(page.locator('#weather-note')).toContainText('직접');
 });
 import { fileURLToPath } from 'node:url';
+
+test('palette variants filter, apply to outfits and persist', async ({ page }) => {
+  await page.route('**/api/weather?city=*', route => route.fulfill({ json: { temperature: 18, rain: false, observedAt: '2026-10-09T09:15' } }));
+  await page.goto('/');
+  await expect(page.locator('.palette-option')).toHaveCount(16);
+  await page.locator('.palette-filters').getByRole('button', { name: '가을 웜', exact: true }).click();
+  await expect(page.locator('.palette-option')).toHaveCount(4);
+  await page.locator('.palette-option').filter({ hasText: '딥 · 깊고 묵직한 색' }).click();
+  await expect(page.locator('#selected-name')).toContainText('가을 웜 딥');
+  await expect(page.locator('#weather-note')).toContainText('현재 날씨 반영');
+  await page.locator('#recommend-form').evaluate(form => form.requestSubmit());
+  await expect(page.locator('.look').first()).toContainText('브릭');
+  await expect(page.locator('.look').first()).toContainText('가을 웜 딥 팔레트');
+  await page.reload();
+  await expect(page.locator('#selected-name')).toContainText('가을 웜 딥');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+});
 test('wardrobe recommendation history reload and delete', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.route('**/api/weather?city=seoul', route => route.fulfill({ json: { temperature: 18, rain: false, observedAt: '2026-10-09T09:15' } }));

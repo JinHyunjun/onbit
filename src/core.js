@@ -4,6 +4,24 @@ export const palettes = {
   autumn: { name: '깊고 따뜻한 색', season: '가을 팔레트', colors: ['#AC6449', '#B69551', '#797E54', '#A48B73'], labels: ['테라코타', '머스타드', '올리브', '카멜'] },
   winter: { name: '선명하고 시원한 색', season: '겨울 팔레트', colors: ['#334760', '#823F5C', '#36796C', '#D8DCE4'], labels: ['네이비', '베리', '에메랄드', '아이스 그레이'] }
 };
+// Base seasons remain available for saved selections and photo recommendations.
+export const paletteFamilies = { spring: '봄 웜', summer: '여름 쿨', autumn: '가을 웜', winter: '겨울 쿨' };
+const variants = [
+  ['spring-light', 'spring', '라이트 · 밝고 산뜻한 색', ['#F7B8AA','#FFE4A0','#C4DEB7','#FFF0D4'], ['피치','레몬 크림','라이트 그린','아이보리']],
+  ['spring-warm', 'spring', '웜 · 따뜻하고 생기 있는 색', ['#F28A65','#E9B449','#88B878','#D4AB76'], ['살몬','골든 옐로','애플 그린','허니 베이지']],
+  ['spring-bright', 'spring', '브라이트 · 맑고 선명한 색', ['#F16B76','#FFD24D','#55C5A6','#36A9BA'], ['선명한 코랄','선샤인','민트 그린','터쿼이즈']],
+  ['summer-light', 'summer', '라이트 · 시원하고 밝은 색', ['#D6C6E5','#BDD9EB','#F0C2D2','#D1E5DF'], ['라이트 라일락','파우더 블루','베이비 핑크','페일 민트']],
+  ['summer-cool', 'summer', '쿨 · 차분하고 시원한 색', ['#A292BF','#7198BE','#C780A2','#879AC1'], ['모브','쿨 블루','쿨 로즈','페리윙클']],
+  ['summer-soft', 'summer', '소프트 · 부드럽고 은은한 색', ['#B4A3B5','#92A8B5','#BD9BA6','#96A69F'], ['더스티 라일락','블루 그레이','더스티 로즈','세이지 그레이']],
+  ['autumn-soft', 'autumn', '소프트 · 포근하고 은은한 색', ['#BD927E','#C2AB73','#9CA284','#B8A18A'], ['로즈 브라운','샌드','소프트 올리브','토프']],
+  ['autumn-warm', 'autumn', '웜 · 풍부하고 따뜻한 색', ['#B75E35','#C19637','#7E8749','#AF7D47'], ['번트 오렌지','골드 머스타드','모스 그린','카라멜']],
+  ['autumn-deep', 'autumn', '딥 · 깊고 묵직한 색', ['#7B3F32','#806322','#43583C','#624637'], ['브릭','앤틱 골드','포레스트','초콜릿']],
+  ['winter-cool', 'winter', '쿨 · 차갑고 또렷한 색', ['#315B8C','#AA3E77','#247E88','#CED9EE'], ['로열 블루','쿨 베리','쿨 틸','아이스 블루']],
+  ['winter-deep', 'winter', '딥 · 어둡고 선명한 색', ['#202D49','#672C50','#214D43','#4D3B65'], ['딥 네이비','버건디','딥 에메랄드','플럼']],
+  ['winter-bright', 'winter', '브라이트 · 강렬하고 맑은 색', ['#2458CC','#D53681','#008F70','#D9DDF3'], ['코발트','마젠타','에메랄드 그린','아이스 바이올렛']]
+];
+for (const [key, family, name, colors, labels] of variants) palettes[key] = { name, season: `${paletteFamilies[family]} ${name.split(' · ')[0]} 팔레트`, family, colors, labels };
+for (const family of Object.keys(paletteFamilies)) palettes[family].family = family;
 export function photoQuality(pixels) {
   let luminance = 0, clipped = 0;
   const count = pixels.length / 4;

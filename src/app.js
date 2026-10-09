@@ -1,5 +1,5 @@
 import { FaceDetector, FilesetResolver } from '@mediapipe/tasks-vision';
-import { palettes, photoQuality, recommendations } from './core.js';
+import { palettes, paletteFamilies, photoQuality, recommendations } from './core.js';
 import { cheekRegions, combineSkinPatches, estimatePersonalColor, seasonNames } from './color-analysis.js';
 import './style.css';
 import './analysis.css';
@@ -26,9 +26,19 @@ app.innerHTML = `
 <div id="status" class="status" role="status" aria-live="polite"></div>
 </main><footer><a class="brand" href="#">◐ 온빛</a><p>색을 비교하고, 나에게 맞는 선택을 쌓아가요.<br>얼굴 사진은 전송·저장하지 않습니다. 옷장·선택 기록은 이 기기의 브라우저에 저장됩니다.<br>날씨 데이터: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · 지역별 현재 기온·강수량을 사용합니다.</p><span>ONBIT · 2026</span></footer>`;
 
+let paletteFilter = 'all';
+const paletteFilters = document.createElement('div'); paletteFilters.className = 'palette-filters'; paletteFilters.setAttribute('aria-label', '팔레트 계절 필터');
+for (const [key, name] of [['all', '전체 16종'], ...Object.entries(paletteFamilies)]) {
+  const button = document.createElement('button'); button.type = 'button'; button.className = 'secondary'; button.textContent = name; button.dataset.family = key;
+  button.addEventListener('click', () => { paletteFilter = key; renderPalettes(); }); paletteFilters.append(button);
+}
+$('palettes').before(paletteFilters);
+const paletteHint = document.createElement('p'); paletteHint.className = 'helper'; paletteHint.textContent = '계절별 기본 색과 라이트·소프트·딥 등의 세부 팔레트를 비교해 보세요. 사진 추천은 4계절 후보를 제안하며 세부 유형은 직접 선택합니다.'; paletteFilters.before(paletteHint);
 function renderPalettes() {
   $('palettes').replaceChildren();
+  for (const button of paletteFilters.children) button.setAttribute('aria-pressed', String(button.dataset.family === paletteFilter));
   for (const [key, palette] of Object.entries(palettes)) {
+    if (paletteFilter !== 'all' && palette.family !== paletteFilter) continue;
     const button = document.createElement('button'); button.className = 'palette-option'; button.type = 'button'; button.setAttribute('aria-pressed', String(key === state.palette));
     const row = document.createElement('span'); row.className = 'mini-swatches';
     palette.colors.forEach(color => { const swatch = document.createElement('i'); swatch.style.backgroundColor = color; row.append(swatch); });
