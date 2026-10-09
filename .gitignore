@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars*
+.env*
+test-results/
+public/vision/wasm/
+public/vision/*.tflite
+playwright-report/
+worker-configuration.d.ts

@@ -1,0 +1,27 @@
+{
+  "name": "color-style",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "node scripts/prepare-assets.mjs && vite build",
+    "types": "wrangler types",
+    "check": "tsc --noEmit",
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
+    "preview:deploy": "npm run build && wrangler deploy --dry-run",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261008.1",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "wrangler": "^4.149.0"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.1.0"
+  }
+}
